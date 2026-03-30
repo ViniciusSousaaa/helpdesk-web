@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,6 +10,19 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault(); 
+    
+    if (!email || !password) {
+      toast.error('Por favor, preencha seu e-mail e senha.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Por favor, insira um e-mail válido (ex: nome@dominio.com).');
+      return;
+    }
+
+    const loadingToast = toast.loading('Autenticando...');
     
     try {
       const response = await axios.post('http://localhost:8080/auth/login', {
@@ -19,10 +33,11 @@ export default function Login() {
       const token = response.data.token;
       localStorage.setItem('token', token);
       
+      toast.success('Bem-vindo ao Helpdesk!', { id: loadingToast });
       navigate('/dashboard');
 
     } catch (error) {
-      alert('Erro ao fazer login. Verifique se o e-mail e senha estão corretos.');
+      toast.error('E-mail ou senha incorretos.', { id: loadingToast });
       console.error(error);
     }
   };
@@ -32,7 +47,7 @@ export default function Login() {
       <div className="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md">
         <h1 className="text-3xl font-bold text-white mb-6 text-center">Helpdesk Login</h1>
         
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4" noValidate>
           <div>
             <label className="block text-slate-300 mb-2">E-mail</label>
             <input 
@@ -64,6 +79,13 @@ export default function Login() {
             Entrar
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <span className="text-slate-400">Ainda não tem conta? </span>
+          <Link to="/register" className="text-sky-400 hover:text-sky-300 font-bold transition duration-200">
+            Cadastre-se aqui
+          </Link>
+        </div>
       </div>
     </div>
   );
